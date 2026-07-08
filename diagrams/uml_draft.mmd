@@ -1,0 +1,50 @@
+classDiagram
+    %% PawPal+ core design: Owner, Pet, CareTask, DailyPlan
+
+    class Owner {
+        +String name
+        +String email
+        +List<String> preferences
+        +int dailyAvailableMinutes
+        +addPreference(String)
+        +removePreference(String)
+        +getAvailability() : int
+    }
+
+    class Pet {
+        +String name
+        +String species
+        +int age
+        +String size
+        +String energyLevel
+        +List<String> careNotes
+        +updateHealthNotes(String)
+        +needsToday() : List<String>
+    }
+
+    class CareTask {
+        +String title
+        +String category
+        +int durationMinutes
+        +String priority
+        +boolean recurring
+        +String notes
+        +estimateEffort() : int
+        +markComplete()
+    }
+
+    class DailyPlan {
+        +LocalDate date
+        +List<CareTask> tasks
+        +Owner owner
+        +Pet pet
+        +generatePlan() : List<CareTask>
+        +addTask(CareTask)
+        +removeTask(CareTask)
+        +explainPlan() : String
+    }
+
+    Owner "1" --> "1" Pet : owns
+    Owner "1" --> "1" DailyPlan : creates
+    DailyPlan "1" o-- "*" CareTask : contains
+    Pet "1" --> "*" CareTask : requires
