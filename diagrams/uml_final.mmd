@@ -1,0 +1,139 @@
+```mmd
+%% PawPal+ final UML (automatically generated)
+classDiagram
+
+    %% Enums
+    class Priority {
+        <<enumeration>>
+        LOW
+        MEDIUM
+        HIGH
+    }
+
+    class TaskCategory {
+        <<enumeration>>
+        WALK
+        FEEDING
+        MEDS
+        GROOMING
+        ENRICHMENT
+    }
+
+    class TaskStatus {
+        <<enumeration>>
+        PENDING
+        SCHEDULED
+        COMPLETED
+        SKIPPED
+    }
+
+    %% Domain classes
+    class Owner {
+        +name: str
+        +email: str
+        +preferences: List[str]
+        +daily_available_minutes: int
+        +add_preference(preference)
+        +remove_preference(preference)
+        +get_availability()
+    }
+
+    class Pet {
+        +pet_id: str
+        +name: str
+        +species: str
+        +age: int
+        +size: str
+        +energy_level: str
+        +care_notes: List[str]
+        +update_health_notes(note)
+        +needs_today(): List[str]
+    }
+
+    class CareTask {
+        +title: str
+        +category: TaskCategory
+        +duration_minutes: int
+        +priority: Priority
+        +pet_id: str
+        +recurring: bool
+        +recurrence: Optional[str]
+        +due_date: Optional[date]
+        +preferred_start_time: Optional[time]
+        +notes: str
+        +completed: bool
+        +scheduled: bool
+        +skipped: bool
+        +estimate_effort(): int
+        +mark_complete() -> CareTask?
+        +should_schedule() -> bool
+        +status: TaskStatus  <<derived>>
+    }
+
+    class ScheduledTask {
+        +task: CareTask
+        +start_time: time
+        +end_time: time
+        +conflicts_with(other: ScheduledTask) -> bool
+    }
+
+    class DailyPlan {
+        +date: date
+        +owner: Owner
+        +pets: Dict[str, Pet]
+        +scheduled_tasks: List[ScheduledTask]
+        +unscheduled_tasks: List[CareTask]
+        +add_task(task: CareTask)
+        +remove_task(task: CareTask)
+        +add_scheduled_task(scheduled_task: ScheduledTask)
+        +get_all_tasks() -> List[CareTask]
+        +get_tasks_by_pet(pet_id: str)
+        +get_tasks_by_pet_name(name: str)
+        +get_tasks_by_status(status: TaskStatus)
+        +filter_tasks(status?, pet_name?)
+        +explain_plan(scheduled_tasks: List[ScheduledTask]) -> str
+    }
+
+    class Scheduler {
+        +owner: Owner
+        +warnings: List[str]
+        +generate_plan(plan: DailyPlan, tasks: List[CareTask]) -> (List[ScheduledTask], List[str])
+        +_sort_tasks(tasks: List[CareTask]) -> List[CareTask]
+        +_find_conflict_at(...)
+        +_find_next_available_start(...)
+        +_add_minutes_to_time(start_time, minutes) -> time
+        +validate_schedule(scheduled_tasks: List[ScheduledTask]) -> bool
+        +filter_tasks_by_pet(tasks: List[CareTask], pet_id: str)
+        +filter_tasks_by_status(tasks: List[CareTask], status: TaskStatus)
+    }
+
+    %% Associations & multiplicities
+    DailyPlan --> Owner : owner
+    DailyPlan "1" o-- "0..*" Pet : pets
+    DailyPlan "1" o-- "0..*" ScheduledTask : scheduled_tasks
+    DailyPlan "1" o-- "0..*" CareTask : unscheduled_tasks
+
+    ScheduledTask *-- CareTask : contains
+    CareTask --> Pet : pet_id
+
+    Scheduler ..> DailyPlan : uses
+    Scheduler ..> CareTask : consumes
+    Scheduler ..> ScheduledTask : creates
+
+    %% Notes about behavior
+    note right of Scheduler
+      generate_plan() workflow:
+        - sort tasks by preferred time, priority, recurrence, duration
+        - for each task: check preferred-time conflict
+        - find next available slot if needed
+        - create ScheduledTask and mark CareTask.scheduled = True
+        - if cannot fit: set CareTask.skipped = True and emit warning
+      returns: (scheduled_tasks, warnings)
+    end note
+
+    note left of CareTask
+      mark_complete(): when recurrence is "daily" or "weekly", returns a
+      new CareTask instance with due_date advanced by 1 or 7 days.
+    end note
+
+```

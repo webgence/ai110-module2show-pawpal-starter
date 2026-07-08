@@ -22,6 +22,9 @@ if "owner" not in st.session_state:
     st.session_state.daily_plan = None
     st.session_state.scheduler = None
 
+if st.session_state.scheduler is None:
+    st.session_state.scheduler = Scheduler(st.session_state.owner)
+
 st.divider()
 
 # Sidebar for Owner Setup
@@ -145,10 +148,22 @@ with col_right:
         
         # Display current tasks
         if st.session_state.daily_plan and st.session_state.daily_plan.unscheduled_tasks:
-            st.write("**Unscheduled Tasks:**")
-            for task in st.session_state.daily_plan.unscheduled_tasks:
-                pet_name = st.session_state.pets[task.pet_id].name if task.pet_id in st.session_state.pets else "Unknown"
-                st.write(f"- {task.title} ({task.duration_minutes} min, {task.priority.name}) — {pet_name}")
+            sorted_tasks = st.session_state.scheduler._sort_tasks(
+                st.session_state.daily_plan.unscheduled_tasks.copy()
+            )
+            task_rows = [
+                {
+                    "Task": task.title,
+                    "Pet": st.session_state.pets[task.pet_id].name if task.pet_id in st.session_state.pets else "Unknown",
+                    "Preferred Start": task.preferred_start_time.strftime("%H:%M") if task.preferred_start_time else "Any",
+                    "Duration (min)": task.duration_minutes,
+                    "Priority": task.priority.name,
+                    "Recurring": "Yes" if task.recurring else "No",
+                }
+                for task in sorted_tasks
+            ]
+            st.subheader("Unscheduled Tasks")
+            st.table(task_rows)
         else:
             st.info("No tasks yet. Add one above!")
     else:
@@ -162,34 +177,49 @@ st.subheader("📅 Generate Schedule")
 if st.session_state.owner.name and st.session_state.pets and st.session_state.daily_plan:
     if st.button("Generate Today's Schedule", key="generate_schedule_btn"):
         with st.spinner("Creating your schedule..."):
-            # Generate the plan
             scheduled_tasks, warnings = st.session_state.scheduler.generate_plan(
                 st.session_state.daily_plan,
                 st.session_state.daily_plan.unscheduled_tasks.copy()
             )
-            
-            # Add scheduled tasks to the plan
             for scheduled_task in scheduled_tasks:
                 st.session_state.daily_plan.add_scheduled_task(scheduled_task)
-        
-        st.success("Schedule generated! ✅")
 
-        # Display any warnings
         if warnings:
+            st.warning("⚠️ Scheduling note: some tasks were adjusted due to timing conflicts.")
             for warning in warnings:
                 st.warning(warning)
-        
-        # Display the schedule
-        st.markdown("### 📆 Today's Schedule")
-        schedule_text = st.session_state.daily_plan.explain_plan(st.session_state.daily_plan.scheduled_tasks)
-        st.markdown(schedule_text)
-        
-        # Display unscheduled tasks if any
+        else:
+            st.success("Schedule generated with no conflicts! ✅")
+
+        if st.session_state.daily_plan.scheduled_tasks:
+            st.subheader("📆 Today's Schedule")
+            schedule_rows = [
+                {
+                    "Start": task.start_time.strftime("%H:%M"),
+                    "End": task.end_time.strftime("%H:%M"),
+                    "Task": task.task.title,
+                    "Pet": st.session_state.pets[task.task.pet_id].name if task.task.pet_id in st.session_state.pets else "Unknown",
+                    "Duration": task.task.duration_minutes,
+                    "Priority": task.task.priority.name,
+                }
+                for task in sorted(st.session_state.daily_plan.scheduled_tasks, key=lambda x: x.start_time)
+            ]
+            st.table(schedule_rows)
+
         if st.session_state.daily_plan.unscheduled_tasks:
-            st.warning("⚠️ Could not schedule (ran out of time):")
-            for task in st.session_state.daily_plan.unscheduled_tasks:
-                pet_name = st.session_state.pets[task.pet_id].name if task.pet_id in st.session_state.pets else "Unknown"
-                st.write(f"- {task.title} ({task.duration_minutes} min) — {pet_name}")
+            st.warning("⚠️ Could not schedule the following tasks due to time limits:")
+            unscheduled_rows = [
+                {
+                    "Task": task.title,
+                    "Pet": st.session_state.pets[task.pet_id].name if task.pet_id in st.session_state.pets else "Unknown",
+                    "Duration": task.duration_minutes,
+                    "Priority": task.priority.name,
+                }
+                for task in st.session_state.daily_plan.unscheduled_tasks
+            ]
+            st.table(unscheduled_rows)
+        else:
+            st.success("All tasks fit into today's schedule.")
 else:
     st.info("ℹ️ Complete the Owner setup and add at least one pet and task to generate a schedule.")
 
