@@ -72,14 +72,14 @@ Sample test output:
 
 ## 📐 Smarter Scheduling
 
-> Fill in once you've implemented scheduling logic.
+This app implements a lightweight scheduling engine with task sorting, filtering, conflict detection, and recurring task handling.
 
 | Feature | Method(s) | Notes |
 |---------|-----------|-------|
-| Task sorting | | e.g., by priority, duration |
-| Filtering | | e.g., skip tasks if time runs out |
-| Conflict handling | | e.g., overlapping time slots |
-| Recurring tasks | | e.g., daily vs. weekly |
+| Sorting behavior | `Scheduler._sort_tasks()` | Orders tasks by preferred start time, priority, recurrence, and duration |
+| Filtering behavior | `DailyPlan.filter_tasks()`, `DailyPlan.get_tasks_by_pet_name()`, `Scheduler.filter_tasks_by_pet()`, `Scheduler.filter_tasks_by_status()` | Allows filtering by pet name and completion status |
+| Conflict detection | `ScheduledTask.conflicts_with()`, `Scheduler._find_conflict_at()`, `Scheduler._find_next_available_start()` | Detects overlapping slots and returns warnings rather than crashing |
+| Recurring task logic | `CareTask.mark_complete()` | Automatically creates the next daily/weekly task instance when a recurring task is completed |
 
 ## 📸 Demo Walkthrough
 

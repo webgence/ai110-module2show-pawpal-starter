@@ -1,4 +1,4 @@
-from pawpal_system import Owner, Pet, CareTask, Priority, TaskCategory, DailyPlan, Scheduler
+from pawpal_system import Owner, Pet, CareTask, Priority, TaskCategory, TaskStatus, DailyPlan, Scheduler
 from datetime import date, time
 
 
@@ -40,6 +40,9 @@ def main():
         priority=Priority.HIGH,
         pet_id="dog_001",
         recurring=True,
+        recurrence="daily",
+        due_date=date.today(),
+        preferred_start_time=time(hour=8, minute=0),
         notes="Before breakfast, around neighborhood"
     )
     
@@ -50,9 +53,11 @@ def main():
         priority=Priority.HIGH,
         pet_id="dog_001",
         recurring=True,
+        recurrence="daily",
+        due_date=date.today(),
         notes="Use special food for sensitive stomach"
     )
-    
+
     task3 = CareTask(
         title="Playtime & Enrichment",
         category=TaskCategory.ENRICHMENT,
@@ -60,9 +65,11 @@ def main():
         priority=Priority.MEDIUM,
         pet_id="dog_001",
         recurring=True,
+        recurrence="weekly",
+        due_date=date.today(),
         notes="Fetch or tug toy"
     )
-    
+
     task4 = CareTask(
         title="Feed Whiskers",
         category=TaskCategory.FEEDING,
@@ -70,9 +77,12 @@ def main():
         priority=Priority.HIGH,
         pet_id="cat_001",
         recurring=True,
+        recurrence="daily",
+        due_date=date.today(),
+        preferred_start_time=time(hour=8, minute=0),
         notes="Wet food preferred"
     )
-    
+
     task5 = CareTask(
         title="Litter Box Cleaning",
         category=TaskCategory.ENRICHMENT,
@@ -80,8 +90,13 @@ def main():
         priority=Priority.MEDIUM,
         pet_id="cat_001",
         recurring=True,
+        recurrence="weekly",
+        due_date=date.today(),
         notes="Clean and refresh litter"
     )
+
+    # Mark one task complete to test status filtering and auto-create next occurrence
+    next_task = task2.mark_complete()
     
     # Create a Daily Plan
     today = date.today()
@@ -91,16 +106,18 @@ def main():
         pets={"dog_001": dog, "cat_001": cat}
     )
     
-    # Add tasks to the plan
-    plan.add_task(task1)
-    plan.add_task(task2)
+    # Add tasks to the plan out of logical order
     plan.add_task(task3)
-    plan.add_task(task4)
     plan.add_task(task5)
+    plan.add_task(task1)
+    plan.add_task(task4)
+    plan.add_task(task2)
+    if next_task is not None:
+        plan.add_task(next_task)
     
     # Create a Scheduler and generate the plan
     scheduler = Scheduler(owner)
-    scheduled_tasks = scheduler.generate_plan(plan, plan.unscheduled_tasks)
+    scheduled_tasks, warnings = scheduler.generate_plan(plan, plan.unscheduled_tasks)
     
     # Add scheduled tasks to the plan
     for scheduled_task in scheduled_tasks:
@@ -129,7 +146,25 @@ def main():
     # Print the schedule explanation
     explanation = plan.explain_plan(plan.scheduled_tasks)
     print(explanation)
-    
+
+    # Print any scheduler warnings
+    if warnings:
+        print("\nWarnings:")
+        for warning in warnings:
+            print(f"- {warning}")
+
+    # Print filtered results to verify sorting and filtering
+    print("\nFiltered task views:")
+    completed_tasks = plan.filter_tasks(status=TaskStatus.COMPLETED)
+    print(f"- Completed tasks ({len(completed_tasks)}):")
+    for task in completed_tasks:
+        print(f"    • {task.title} ({task.pet_id})")
+
+    whiskers_tasks = plan.filter_tasks(pet_name="Whiskers")
+    print(f"- Tasks for Whiskers ({len(whiskers_tasks)}):")
+    for task in whiskers_tasks:
+        print(f"    • {task.title} [{task.status.value}] ")
+
     # Print unscheduled tasks if any
     if plan.unscheduled_tasks:
         print("\n⚠️  COULD NOT SCHEDULE (ran out of time):")
