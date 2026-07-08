@@ -92,3 +92,36 @@ Describe your app in numbered steps so a reader can follow along without watchin
 5. <!-- Add more steps as needed -->
 
 **Screenshot or video** *(optional)*: <!-- Insert a screenshot or link to a demo video here -->
+
+
+
+## Sample Output 
+
+|
+============================================================
+🐾 PawPal+ DAILY SCHEDULE 🐾
+============================================================
+Owner: Jordan (jordan@example.com)
+Date: 2026-07-08
+Available Time: 480 minutes
+
+Pets in care:
+  - Biscuit (Golden Retriever): high energy, large size
+    📝 needs 2 walks daily
+    📝 sensitive stomach - special food only
+  - Whiskers (Tabby Cat): medium energy, small size
+    📝 indoor only
+    📝 arthritis - monitor activity
+
+------------------------------------------------------------
+TODAY'S SCHEDULE:
+------------------------------------------------------------
+Daily plan for 2026-07-08:
+  08:00 - 08:30: Morning Walk (30 min, HIGH) for ['Biscuit']
+  08:30 - 08:40: Feed Biscuit (10 min, HIGH) for ['Biscuit']
+  08:40 - 08:45: Feed Whiskers (5 min, HIGH) for ['Whiskers']
+  08:45 - 09:05: Playtime & Enrichment (20 min, MEDIUM) for ['Biscuit']
+  09:05 - 09:10: Litter Box Cleaning (5 min, MEDIUM) for ['Whiskers']
+
+
+============================================================|

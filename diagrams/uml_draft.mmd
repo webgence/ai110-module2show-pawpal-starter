@@ -1,5 +1,22 @@
 classDiagram
-    %% PawPal+ core design: Owner, Pet, CareTask, DailyPlan
+    %% PawPal+ core design: Owner, Pet, CareTask, DailyPlan, Scheduler, ScheduledTask
+    %% Enums for type safety and multi-pet support
+
+    class Priority {
+        <<enumeration>>
+        LOW
+        MEDIUM
+        HIGH
+    }
+
+    class TaskCategory {
+        <<enumeration>>
+        WALK
+        FEEDING
+        MEDS
+        GROOMING
+        ENRICHMENT
+    }
 
     class Owner {
         +String name
@@ -12,6 +29,7 @@ classDiagram
     }
 
     class Pet {
+        +String petId
         +String name
         +String species
         +int age
@@ -24,27 +42,51 @@ classDiagram
 
     class CareTask {
         +String title
-        +String category
+        +TaskCategory category
         +int durationMinutes
-        +String priority
+        +Priority priority
+        +String petId
         +boolean recurring
         +String notes
+        +boolean completed
         +estimateEffort() : int
         +markComplete()
     }
 
-    class DailyPlan {
-        +LocalDate date
-        +List<CareTask> tasks
-        +Owner owner
-        +Pet pet
-        +generatePlan() : List<CareTask>
-        +addTask(CareTask)
-        +removeTask(CareTask)
-        +explainPlan() : String
+    class ScheduledTask {
+        +CareTask task
+        +Time startTime
+        +Time endTime
+        +conflictsWith(ScheduledTask) : boolean
     }
 
-    Owner "1" --> "1" Pet : owns
+    class DailyPlan {
+        +LocalDate date
+        +Owner owner
+        +Dict<String, Pet> pets
+        +List<ScheduledTask> scheduledTasks
+        +List<CareTask> unscheduledTasks
+        +addTask(CareTask)
+        +removeTask(CareTask)
+        +addScheduledTask(ScheduledTask)
+        +explainPlan(List<ScheduledTask>) : String
+    }
+
+    class Scheduler {
+        +Owner owner
+        +generatePlan(DailyPlan, List<CareTask>) : List<ScheduledTask>
+        +validateSchedule(List<ScheduledTask>) : boolean
+        +prioritizeTasks(List<CareTask>) : List<CareTask>
+    }
+
+    Owner "1" --> "*" Pet : owns
+    Owner "1" --> "1" Scheduler : uses
     Owner "1" --> "1" DailyPlan : creates
-    DailyPlan "1" o-- "*" CareTask : contains
+    DailyPlan "1" --> "*" Pet : references
+    DailyPlan "1" o-- "*" ScheduledTask : contains
+    DailyPlan "1" o-- "*" CareTask : tracks_unscheduled
+    ScheduledTask "1" --> "1" CareTask : wraps
+    CareTask "1" --> "1" Priority : uses
+    CareTask "1" --> "1" TaskCategory : uses
+    Scheduler "1" --> "1" DailyPlan : schedules
     Pet "1" --> "*" CareTask : requires
