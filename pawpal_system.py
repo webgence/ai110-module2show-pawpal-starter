@@ -260,12 +260,38 @@ class Scheduler:
         current_time = schedule_start
 
         for task in tasks:
-            task_start = task.preferred_start_time or current_time
+            preferred_start = task.preferred_start_time
+            task_start = preferred_start or current_time
+            warning_added = False
+
+            if preferred_start is not None:
+                preferred_conflict = self._find_conflict_at(
+                    scheduled,
+                    task,
+                    preferred_start,
+                    task.duration_minutes,
+                )
+                if preferred_conflict is not None:
+                    pet_name = plan.pets.get(task.pet_id).name if task.pet_id in plan.pets else task.pet_id
+                    conflict_name = preferred_conflict.task.title
+                    self.warnings.append(
+                        f"Task '{task.title}' for {pet_name} conflicts with '{conflict_name}' at {preferred_start.strftime('%H:%M')}. "
+                        "It will be moved to the next open slot."
+                    )
+                    warning_added = True
+                elif preferred_start < current_time:
+                    pet_name = plan.pets.get(task.pet_id).name if task.pet_id in plan.pets else task.pet_id
+                    self.warnings.append(
+                        f"Task '{task.title}' for {pet_name} preferred {preferred_start.strftime('%H:%M')} "
+                        "but the schedule is already occupied, so it will be moved to the next open slot."
+                    )
+                    warning_added = True
+
             if task_start < current_time:
                 task_start = current_time
 
             existing_conflict = self._find_conflict_at(scheduled, task, task_start, task.duration_minutes)
-            if existing_conflict is not None:
+            if existing_conflict is not None and not warning_added:
                 pet_name = plan.pets.get(task.pet_id).name if task.pet_id in plan.pets else task.pet_id
                 conflict_name = existing_conflict.task.title
                 self.warnings.append(

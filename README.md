@@ -56,19 +56,26 @@ Paste a sample of your app's CLI or Streamlit output here so a reader can see wh
 
 ## 🧪 Testing PawPal+
 
+Use the following command to run the PawPal+ unit tests:
+
 ```bash
-# Run the full test suite:
-pytest
-
-# Run with coverage:
-pytest --cov
+python -m pytest
 ```
 
-Sample test output:
+These tests cover the core scheduling engine and task management behaviors, including:
 
+- task sorting and chronological plan generation
+- preferred-time conflict detection and warning behavior
+- task filtering by pet and status
+- recurring task rollover for daily tasks
+
+Successful test output:
+
+```bash
+9 passed in 0.04s
 ```
-# Paste your pytest output here
-```
+
+**Confidence Level:** ⭐⭐⭐
 
 ## 📐 Smarter Scheduling
 
